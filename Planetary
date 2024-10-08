@@ -1,0 +1,299 @@
+#Librerias a utilizar
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from google.colab import files
+
+load = files.upload()
+
+Planetary = pd.read_csv('Planet1.csv')
+
+Planetary.head()
+
+Planetary.info()
+
+Planetas_terrestres = Planetary[Planetary['Type'] == 'Terrestrial']
+print(Planetas_terrestres)
+
+Gigantes_Gaseosos = Planetary[Planetary['Type'] == 'Gas Giant']
+print(Gigantes_Gaseosos)
+
+Ice = Planetary[Planetary['Type'] == 'Ice Giant']
+print(Ice)
+
+Planetary.head(8)
+
+missing_values_count = Planetary.isnull().sum()
+print(missing_values_count)
+
+#Exploracion de relaciones entre caracteristicas de planetas
+
+plt.figure(figsize=(10,6))
+sns.boxplot(x='Radius (10km)',y='Mass (10^23kg)', data=Planetary)
+plt.xlabel('Tamaño')
+plt.ylabel('Masa')
+plt.title('Relacion entre el Tamaño y la masa de los planetas')
+plt.show()
+
+Tamaño_masa = Planetary[['Radius (10km)', 'Mass (10^23kg)', 'Name']]
+sns.pairplot(Tamaño_masa, palette='viridis', hue='Name')
+plt.suptitle('Relacion entre el Tamaño y la masa de los planetas', y=1.02)
+plt.show()
+
+##No existe relacion directa entre el tamaño y la masa de los planetas
+
+!pip install squarify
+import squarify
+
+
+type_counts = Planetary['Type'].value_counts()
+
+# Crear el Treemap
+plt.figure(figsize=(12, 8))
+squarify.plot(sizes=type_counts.values, label=type_counts.index, alpha=.8, color=plt.cm.Set3.colors)
+
+# Título del gráfico
+plt.title('Distribución de los tipos de planetas')
+
+plt.axis('off')  # Quitamos los ejes
+# Mostrar el gráfico
+plt.show()
+
+Dias_Orbita = Planetary[['Name', 'Orbital Period (days)']]
+
+plt.figure(figsize=(10,6))
+sns.barplot(x='Name',y='Orbital Period (days)', data=Planetas_terrestres)
+plt.title('Dias de orbita de los planetas')
+plt.xlabel('Periodo Orbital')
+plt.ylabel('Nombre')
+
+plt.figure(figsize=(10,6))
+sns.barplot(x='Name',y='Rotation Period (hours)', data=Gigantes_Gaseosos)
+plt.title('Dias de orbita de los planetas')
+plt.xlabel('Periodo Orbital')
+plt.ylabel('Nombre')
+
+##Numero de lunas
+
+plt.figure(figsize=(10,6))
+sns.barplot(x='Name',y='Moons', data=Planetary)
+plt.title('Numero de Lunas')
+
+##Relacion entre el Tamaño y la temperatura de los planetas
+
+plt.figure(figsize=(10,6))
+sns.boxplot(x='Radius (10km)',y='Mean Temperature (�C)', data=Planetary)
+plt.xlabel('Tamaño')
+plt.ylabel('Temperatura')
+plt.title('Relacion entre el Tamaño y la temperatura de los planetas')
+plt.show()
+
+Tamaño_Temp = Planetary[['Radius (10km)', 'Mean Temperature (�C)', 'Name']]
+sns.pairplot(Tamaño_Temp, palette='viridis', hue='Name')
+plt.suptitle('Relacion entre el Tamaño y la temperatura de los planetas', y=1.02)
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.scatterplot(x='Radius (10km)',y='Mean Temperature (�C)', data=Planetary)
+plt.xlabel('Tamaño')
+plt.ylabel('Temperatura')
+plt.title('Relacion entre el Tamaño y la temperatura de los planetas')
+plt.show()
+
+Planetary_clean = Planetary.dropna(subset=['Radius (10km)', 'Mean Temperature (�C)'])
+
+##relacion entre densidad y su composicion
+
+plt.figure(figsize=(10,6))
+sns.boxplot(x='Density (g/cm^3)',y='Radius (10km)', data=Planetary)
+plt.xlabel('Tamaño')
+plt.ylabel('Densidad')
+plt.title('Relacion entre el Tamaño y la densidad de los planetas')
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.scatterplot(x='Radius (10km)',y='Density (g/cm^3)', data=Planetary)
+plt.xlabel('Tamaño')
+plt.ylabel('densidad')
+plt.title('Relacion entre el Tamaño y la densidad de los planetas')
+plt.show()
+
+##relacion entre la masa y la densidad de los planetas
+
+plt.figure(figsize=(10,6))
+sns.boxplot(x='Density (g/cm^3)',y='Mass (10^23kg)', data=Planetary)
+plt.xlabel('densidad')
+plt.ylabel('masa')
+plt.title('Relacion entre el densidad y la masa de los planetas')
+plt.show()
+
+from os import name
+plt.figure(figsize=(10,6))
+sns.scatterplot(x='Density (g/cm^3)',y='Mass (10^23kg)', data=Planetary, hue='Name')
+plt.xlabel('densidad')
+plt.ylabel('masa')
+plt.title('Relacion entre el densidad y la masa de los planetas')
+plt.show()
+
+Correlaciones_planets = Planetary[['Radius (10km)', 'Mass (10^23kg)', 'Density (g/cm^3)','Name']]
+sns.pairplot(Correlaciones_planets, palette='viridis', hue='Name')
+plt.suptitle('Relacion entre el Tamaño y la temperatura de los planetas', y=1.02)
+plt.show()
+
+##clasificacion de planetas por tipo
+
+# Importar LabelEncoder
+from sklearn.preprocessing import LabelEncoder
+
+# Crear una instancia de LabelEncoder
+label_encoder = LabelEncoder()
+
+# Aplicar LabelEncoder a la columna 'Type' que contiene los tipos de planeta
+Planetary['Type_encoded'] = label_encoder.fit_transform(Planetary['Type'])
+
+# Ver los tipos de planetas originales y cómo se codifican
+print("Tipos de planetas originales:", Planetary['Type'].unique())
+print("Codificación numérica:", Planetary['Type_encoded'].unique())
+
+# Mostrar una parte del DataFrame para verificar
+print(Planetary[['Type', 'Type_encoded']].head(10))
+
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import LabelEncoder
+
+
+# Preprocesamiento de los datos (asegúrate de que no haya valores nulos en las columnas de interés)
+Planetary = Planetary.dropna(subset=['Radius (10km)', 'Mass (10^23kg)', 'Average Distance from the Sun (million km)','Mean Temperature (�C)', 'Type'])
+
+# Codificar la variable de tipo de planeta (de texto a numérico)
+label_encoder = LabelEncoder()
+Planetary['Type_encoded'] = label_encoder.fit_transform(Planetary['Type'])
+
+# Definir las características (X) y la variable objetivo (y)
+X = Planetary[['Radius (10km)', 'Mass (10^23kg)', 'Average Distance from the Sun (million km)','Mean Temperature (�C)']]  # Puedes agregar más características si es necesario
+y = Planetary['Type_encoded']
+
+# Dividir los datos en entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Entrenar el modelo Random Forest
+clf = RandomForestClassifier(n_estimators=100, random_state=42)
+clf.fit(X_train, y_train)
+
+# Predecir en el conjunto de prueba
+y_pred = clf.predict(X_test)
+
+# Evaluar el modelo
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.2f}')
+
+# Mostrar un reporte más detallado
+
+
+
+print(classification_report(y_test, y_pred))
+
+##Prediccion de la temperatura segun distancia al sol
+
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Seleccionar las columnas necesarias (distancia y temperatura)
+Planetary_clean = Planetary.dropna(subset=['Average Distance from the Sun (million km)', 'Mean Temperature (�C)'])
+
+# Definir X (distancia) y y (temperatura)
+X = Planetary_clean[['Average Distance from the Sun (million km)']]
+y = Planetary_clean['Mean Temperature (�C)']
+
+# Dividir los datos en entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Crear el modelo de regresión lineal
+model = LinearRegression()
+
+# Entrenar el modelo
+model.fit(X_train, y_train)
+
+# Hacer predicciones
+y_pred = model.predict(X_test)
+
+# Evaluar el modelo
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f'Mean Squared Error: {mse:.2f}')
+print(f'R^2 Score: {r2:.2f}')
+
+
+##visualizaciones avanzadas
+
+import seaborn as sns
+
+# Crear un boxplot para la distribución de la temperatura por tipo de planeta
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='Type_encoded', y='Mean Temperature (�C)', data=Planetary)
+
+# Etiquetas y título
+plt.title('Distribución de la Temperatura por Tipo de Planeta')
+plt.xlabel('Tipo de Planeta')
+plt.ylabel('Temperatura (Kelvin)')
+plt.show()
+
+
+
+# Crear una matriz de correlación
+corr_matrix = Planetary[['Radius (10km)', 'Mass (10^23kg)', 'Average Distance from the Sun (million km)','Mean Temperature (�C)']].corr()
+
+# Crear el heatmap con seaborn
+plt.figure(figsize=(10, 6))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
+
+# Etiquetas y título
+plt.title('Heatmap de Correlación entre Variables Numéricas')
+plt.show()
+
+
+import matplotlib.pyplot as plt
+
+# Crear el gráfico de dispersión para el mapa estelar
+plt.figure(figsize=(10, 8))
+
+# Usar scatter plot, el tamaño de los puntos dependerá del radio del planeta
+plt.scatter(Planetary['Average Distance from the Sun (million km)'], Planetary['Mean Temperature (�C)'],
+            s=Planetary['Radius (10km)'] * 10,  # Tamaño proporcional al radio del planeta
+            alpha=0.7,
+            c=Planetary['Type_encoded'],  # Colorear por tipo de planeta
+            cmap='viridis')
+
+# Etiquetas y título
+plt.title('Mapa Estelar: Distancia a la estrella vs Temperatura del Planeta')
+plt.xlabel('Distancia a la estrella (AU)')
+plt.ylabel('Temperatura (Kelvin)')
+
+# Añadir una leyenda basada en el tamaño del planeta
+plt.colorbar(label='Tipo de Planeta (codificado)')
+
+# Mostrar gráfico
+plt.show()
+
+
+import plotly.express as px
+
+# Crear un gráfico 3D usando Plotly
+fig = px.scatter_3d(Planetary,
+                    x='Average Distance from the Sun (million km)',
+                    y='Mean Temperature (�C)',
+                    z='Mass (10^23kg)',
+                    color='Type_encoded',  # Colorear por tipo de planeta
+                    size='Radius (10km)',  # Tamaño proporcional al radio
+                    hover_data=['Type'],  # Información que aparecerá al hacer hover
+                    title="Visualización 3D de Planetas")
+
+# Mostrar el gráfico
+fig.show()
